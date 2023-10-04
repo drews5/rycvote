@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RYC Voting</title>
+  <link href="https://fonts.googleapis.com/css?family=Roboto+Slab:300,400,700" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Roboto Slab', serif;
+      text-align: center;
+      background-color: #025b74;
+      color: #FFFFFF;
+      padding: 20px;
+      margin: 0;
+    }
+
+    h1 {
+      font-weight: 300;
+      color: #FFFFFF;
+      margin-bottom: 50px;
+    }
+
+    #votes,
+    #newVote {
+      font-size: 1.5em;
+      padding: 20px;
+      margin: 20px;
+      width: 80%;
+      box-sizing: border-box;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .vote-btn,
+    #newVote {
+      background-color: #FFFFFF;
+      color: #025b74;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s ease-in-out;
+      font-size: 1.8em;
+      width: 100px;
+      height: 100px;
+      margin: 20px;
+      border-radius: 50px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: bold;
+    }
+
+    .vote-btn:hover,
+    #newVote:hover {
+      background-color: #2ECC71;
+    }
+
+    #totalVotes {
+      font-size: 3em;
+      color: #FFFFFF;
+    }
+
+    #message {
+      font-size: 1.2em;
+      color: #2ECC71;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .row {
+      display: flex;
+      width: 100%;
+      justify-content: center;
+    }
+
+    .overlay {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(46, 204, 113, 0.9);
+      transition: opacity 500ms;
+      visibility: hidden;
+      opacity: 0;
+    }
+
+    .overlay:target {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    .popup {
+      margin: 70px auto;
+      padding: 20px;
+      background: #fff;
+      border-radius: 5px;
+      width: 30%;
+      position: relative;
+      transition: all 5s ease-in-out;
+    }
+
+    .popup h2 {
+      margin-top: 0;
+      color: #333;
+      font-family: 'Roboto Slab', serif;
+    }
+
+    .popup .content {
+      max-height: 30%;
+      overflow: auto;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .nav-btn {
+      background-color: #FFFFFF;
+      color: #025b74;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s ease-in-out;
+      font-size: 1.8em;
+      width: 100px;
+      height: 100px;
+      margin: 20px;
+      border-radius: 50px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: bold;
+    }
+
+    .nav-btn:hover {
+      background-color: #2ECC71;
+    }
+
+    .button-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .name-input {
+      font-size: 30px;
+    }
+
+    #personName {
+      max-width: 300px;
+      font-size: 1.5em;
+      /* Adjust as needed */
+      height: 60px;
+      /* Adjust as needed */
+    }
+
+    div[style="display:flex; font-family: 'Roboto Slab', serif; justify-content:center;"] {
+      align-items: center;
+    }
+
+    .enlarged {
+      transform: scale(3);
+      transform-origin: top left;
+      /* Adjust as needed */
+    }
+
+    #voteHistoryContainer {
+  display: flex;
+  justify-content: center; /* aligns the table horizontally in the center */
+  align-items: center; /* aligns the table vertically in the center */
+}
+
+  </style>
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+
+<body>
+  <div id="selection" class="button-container">
+    <h1>RYC Voting</h1>
+    <button id="adminBtn" class="nav-btn">Admin</button>
+    <button id="votingBtn" class="nav-btn">Voting</button>
+  </div>
+
+  <div id="admin" style="display: none;">
+    <h1 id="adminTitle" class="hidden">RYC Voting Total</h1>
+    <h2 id="totalVotes" class="hidden">0</h2>
+    <div style="display:flex; font-family: 'Roboto Slab', serif; justify-content:center;">
+      <input id="personName" type="text" placeholder="Person's Name">
+      <button id="newVote">New Vote</button>
+      <button id="finishVote" class="vote-btn">Finish</button>
+    </div>
+  </div>
+  <div id="voteHistoryContainer" style="display: none;">
+    <table id="voteHistory" style="margin: 0 auto;">
+      <tr>
+        <th class="hidden" style="padding-right: 10px;">Name</th>
+        <th class="hidden" style="padding-left: 10px;">Total Votes</th>
+      </tr>
+    </table>
+  </div>
+  <div id="voting" style="display: none;">
+    <h1 id="votingTitle" class="hidden">RYC Voting</h1>
+    <div id="votes" class="container">
+      <div class="row">
+        <button class="vote-btn" value="0">0</button>
+        <button class="vote-btn" value="1">1</button>
+        <button class="vote-btn" value="2">2</button>
+      </div>
+      <div class="row">
+        <button class="vote-btn" value="3">3</button>
+        <button class="vote-btn" value="4">4</button>
+        <button class="vote-btn" value="5">5</button>
+      </div>
+      <div class="row">
+        <button class="vote-btn" value="6">6</button>
+        <button class="vote-btn" value="7">7</button>
+      </div>
+    </div>
+    <p id="message"></p>
+    <div id="waitingMessage">Waiting for first vote.</div>
+  </div>
+</body>
+
+<div id="overlay" class="overlay">
+  <div class="popup">
+    <h2>New Vote</h2>
+    <div class="content">
+      Thank you, new vote session started.
+    </div>
+  </div>
+</div>
+<script>
+  var socket = io();
+  var hasVoted = false;
+  var isFirstTime = true;
+  var totalVotes = 0;
+
+  document.getElementById('waitingMessage').classList.remove('hidden');
+
+  socket.on('votes', function (votes) {
+    if (votes > 0) {
+      document.getElementById('waitingMessage').classList.add('hidden'); // Hide the message
+    }
+    totalVotes = votes; // Update totalVotes
+    document.getElementById('totalVotes').innerText = votes;
+  });
+
+
+  socket.on('newVote', function (name) {
+    document.getElementById('voting').getElementsByTagName('h1')[0].innerText = 'RYC Voting for ' + name;
+    document.getElementById('votes').style.pointerEvents = 'auto';
+    document.getElementById('message').innerText = '';
+    hasVoted = false;
+    document.getElementById('voteHistoryContainer').style.display = 'block'; // Show the table
+    document.getElementById('adminTitle').classList.remove('hidden');
+    document.getElementById('totalVotes').classList.remove('hidden');
+    document.getElementById('votingTitle').classList.remove('hidden');
+    document.getElementById('waitingMessage').classList.add('hidden');
+    document.querySelectorAll('.vote-btn').forEach(function (button) {
+      button.style.backgroundColor = "#FFFFFF";
+    });
+
+    document.getElementById('admin').getElementsByTagName('h1')[0].innerText = 'RYC Voting Total for ' + name;
+    document.getElementById('waitingMessage').classList.add('hidden');
+    document.querySelectorAll('.vote-btn').forEach(function (button) {
+      button.disabled = false;
+      button.classList.remove('hidden');
+    });
+    document.querySelector('#voting h1').classList.remove('hidden');
+  });
+
+  document.querySelectorAll('.vote-btn').forEach(function (button) {
+    button.onclick = function () {
+      if (!hasVoted) {
+        var votes = parseInt(button.value);
+        var name = document.getElementById('voting').getElementsByTagName('h1')[0].innerText.split(' ')[3]; // Get the current name
+        socket.emit('votes', votes);
+        document.getElementById('votes').style.pointerEvents = 'none';
+        document.getElementById('message').innerText = 'Your vote of ' + votes + ' for ' + name + ' has been submitted.';
+        hasVoted = true;
+        this.style.backgroundColor = "#2ECC71";
+      }
+    };
+  });
+
+  document.getElementById('newVote').onclick = function () {
+    // Show voting elements
+    document.getElementById('admin').style.display = 'block';
+    document.getElementById('voting').style.display = 'block';
+
+    // Hide and shrink the table
+    var voteHistoryContainer = document.getElementById('voteHistoryContainer');
+    voteHistoryContainer.style.display = 'none';
+    var table = document.getElementById('voteHistory');
+    table.classList.remove('enlarged');
+
+    // Create overlay
+    var overlay = document.createElement('div');
+    overlay.setAttribute('id', 'overlay');
+    document.body.appendChild(overlay);
+
+    // Add click event to overlay
+    document.getElementById('overlay').onclick = function () {
+        this.parentNode.removeChild(this);
+    };
+};
+
+  document.getElementById('newVote').onclick = function () {
+    var name = document.getElementById('personName').value;
+    if (name) {
+      // Save previous vote
+      var prevName = document.getElementById('admin').getElementsByTagName('h1')[0].innerText.split(' ')[4]; // Get the previous name
+      var prevVotes = document.getElementById('totalVotes').innerText;
+      var table = document.getElementById('voteHistory');
+      var row = table.insertRow(-1);
+      var cell1 = row.insertCell(0);
+      var cell2 = row.insertCell(1);
+      cell1.innerHTML = prevName;
+      cell2.innerHTML = prevVotes;
+
+      // Start new vote
+      socket.emit('newVote', name);
+      document.getElementById('personName').value = '';
+    }
+    if (isFirstTime) {
+      // Delete the first row (index 1) from the table
+      document.getElementById('voteHistory').deleteRow(1);
+      isFirstTime = false;
+      var tableHeaders = document.querySelectorAll('#voteHistory th');
+      for (var i = 0; i < tableHeaders.length; i++) {
+        tableHeaders[i].classList.remove('hidden');
+      }
+      window.location.href = "#overlay";
+      setTimeout(function () {
+        window.location.href = "#";
+      }, 1000);
+    }
+  };
+
+  document.getElementById('finishVote').onclick = function () {
+  // Save previous vote
+  var prevName = document.getElementById('admin').getElementsByTagName('h1')[0].innerText.split(' ')[4]; // Get the previous name
+  var prevVotes = document.getElementById('totalVotes').innerText;
+  var table = document.getElementById('voteHistory');
+  var row = table.insertRow(-1);
+  var cell1 = row.insertCell(0);
+  var cell2 = row.insertCell(1);
+  cell1.innerHTML = prevName;
+  cell2.innerHTML = prevVotes;
+
+  // Hide other elements
+  document.getElementById('admin').style.display = 'none';
+  document.getElementById('voting').style.display = 'none';
+
+  // Show and enlarge the table
+  var voteHistoryContainer = document.getElementById('voteHistoryContainer');
+  voteHistoryContainer.style.display = 'block';
+  var table = document.getElementById('voteHistory');
+  table.classList.add('enlarged');
+};
+
+
+
+
+
+  document.querySelectorAll('.vote-btn').forEach(function (button) {
+    button.disabled = true;
+    button.classList.add('hidden');
+  });
+  document.querySelector('#voting h1').classList.add('hidden');
+
+  document.getElementById('adminBtn').onclick = function () {
+    document.getElementById('selection').style.display = 'none';
+    document.getElementById('admin').style.display = 'block';
+  };
+
+  document.getElementById('votingBtn').onclick = function () {
+    document.getElementById('selection').style.display = 'none';
+    document.getElementById('voting').style.display = 'block';
+    document.getElementById('waitingMessage').classList.remove('hidden'); // Ensure the message is shown
+  };
+
+
+
+</script>
+
+</body>
+
+</html>
